@@ -40,6 +40,15 @@ const MAX_TEST_WORKERS = Math.min(
   DEDICATED_CI_RUNNER ? 4 : 2,
   availableParallelism(),
 );
+// A test deadline only turns a hang into a named failure; it is not a
+// performance assertion. Projects own it so tests do not hard-code host speed.
+// Built projects launch compiled CLI, MCP, and provider processes while other
+// lanes share the runner, and coverage instrumentation slows every lane.
+const DEADLINE_SCALE = COVERAGE_ENABLED ? 2 : 1;
+const TEST_DEADLINE_MS = {
+  source: 30_000 * DEADLINE_SCALE,
+  built: 120_000 * DEADLINE_SCALE,
+} as const;
 
 const TEST_PROJECTS = [...SOURCE_TEST_PROJECTS, ...BUILT_TEST_PROJECTS];
 const PROJECT_POLICIES = {
@@ -132,6 +141,8 @@ const projects = TEST_PROJECTS.map((project) => {
       include: [...project.include],
       ...(project.exclude ? { exclude: [...project.exclude] } : {}),
       isolate: project.isolate !== false,
+      testTimeout: TEST_DEADLINE_MS[project.group],
+      hookTimeout: TEST_DEADLINE_MS[project.group],
       ...policy,
     },
   };
@@ -148,10 +159,16 @@ export default defineConfig({
     retry: 0,
     reporters: ["default"],
     runner: "./tests/processOwnershipRunner.ts",
-    // Boundary projects may compete with TypeScript, docs, and package checks
-    // under Turbo. Keep the deadline bounded while avoiding false failures from
-    // host-level CPU and filesystem contention.
-    testTimeout: COVERAGE_ENABLED ? 60_000 : 30_000,
+    testTimeout: TEST_DEADLINE_MS.source,
+    hookTimeout: TEST_DEADLINE_MS.source,
+    tags: [
+      {
+        name: "long-running",
+        description:
+          "A bounded workload that needs more than its project's deadline",
+        timeout: 300_000 * DEADLINE_SCALE,
+      },
+    ],
     coverage: {
       enabled: false,
       provider: "v8",
