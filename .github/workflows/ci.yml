@@ -328,7 +328,7 @@ jobs:
     strategy:
       # Failed PRs release the remaining matrix slots; qualification retains
       # every shard's diagnostics and coverage. Passing PRs run the full suite.
-      fail-fast: ${{ github.event_name == 'pull_request' && needs.changes.outputs.tier == 'fast' }}
+      fail-fast: false # MEASUREMENT ONLY: drop before merge
       matrix:
         # Fast feedback uses one source group and eight built groups so the
         # slowest built shard job stays inside a ten-minute execution budget.
