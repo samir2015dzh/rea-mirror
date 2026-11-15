@@ -111,9 +111,9 @@ API dependency, and independent fixture compiler oracles keep their existing
 TypeScript versions.
 
 `npm run build:cached` compiles the CLI/MCP runtime and its packaged skill.
-The build also records `dist/mcp-catalog.json` (compact inputs) and
-`dist/mcp-catalog-full.json` from the canonical SDK registrations and binds
-each to the runtime with its own SHA-256 digest. These are
+The build also records `dist/mcp-catalog.json` (compact inputs) from the
+canonical SDK registrations and binds it to the runtime with its SHA-256
+digest. These are
 runtime artifacts, separate from the test catalog below. Default target-free
 MCP startup serves its schemas without constructing analysis validators;
 the first tool or guided-workflow request materializes the canonical runtime
@@ -705,12 +705,14 @@ to reach their original memory, depth, cycle or representation boundary; retain
 those stronger assertions.
 
 When a matrix already holds a named tool definition from live `tools/list`,
-pass that definition through the SDK's `toolDefinition` call option. This keeps
-the selected output-schema validation without eagerly compiling unrelated
-catalog schemas. Re-read definitions if the server advertises a changed list.
+pass that definition through the SDK's `toolDefinition` call option, with the
+canonical output schema attached (`tools/list` omits output schemas by default).
+This keeps output-schema validation without eagerly compiling unrelated catalog
+schemas. Re-read definitions if the server advertises a changed list.
 
-For exact nested input constraints, select the full profile explicitly or use
-the full-SDK conformance suite that owns the field. Compact workflow tests
+For exact nested input constraints, assert the canonical input schema
+(`advertisedInputJsonSchema`) or use the full-SDK conformance suite that owns
+the field. Compact workflow tests
 should assert canonical failure categories and provider-call controls where
 rejection before provider work matters. Do not make today's omission of a
 constraint a compact-profile invariant.
